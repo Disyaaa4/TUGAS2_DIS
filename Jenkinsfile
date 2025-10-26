@@ -2,40 +2,47 @@ pipeline {
     agent any
 
     environment {
-        IMAGENAME = 'dianaiffatul/react-native-note-app'
-        REGISTRY = 'https://index.docker.io/v1/'
-        REGISTRYCREDENTIALS = 'dockerhub-credentials'
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub-credentials')
+        DOCKER_IMAGE = "dianaiffatul/react-native-note-app"
+        DOCKER_TAG = "${BUILD_NUMBER}"
     }
 
     stages {
         stage('Checkout') {
             steps {
-                checkout scm
+                git branch: 'main', url: 'https://github.com/Disyaaa4/TUGAS2_DIS.git'
             }
         }
+
         stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("${IMAGENAME}:${env.BUILD_NUMBER}")
+                    bat """
+                    docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+                    """
                 }
             }
         }
+
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry("${REGISTRY}", "${REGISTRYCREDENTIALS}") {
-                        def tag = "${IMAGENAME}:${env.BUILD_NUMBER}"
-                        docker.image(tag).push()
-                        docker.image(tag).push('latest')
-                    }
+                    bat """
+                    docker login -u ${DOCKERHUB_CREDENTIALS_USR} -p ${DOCKERHUB_CREDENTIALS_PSW}
+                    docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
+                    docker logout
+                    """
                 }
             }
         }
     }
 
     post {
-        always {
-            echo 'Pipeline finished'
+        success {
+            echo "✅ Build and push success! Image: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+        }
+        failure {
+            echo "❌ Build failed. Please check the logs above."
         }
     }
 }
