@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        IMAGENAME = 'dianaiffatul/tugasedisya'
+        IMAGENAME = 'dianaiffatul/react-native-note-app'
         REGISTRY = 'https://index.docker.io/v1/'
         REGISTRYCREDENTIALS = 'dockerhub-credentials'
     }
