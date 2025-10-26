@@ -1,18 +1,23 @@
-# Gunakan image node sebagai base image untuk React Native
-FROM node:18
+FROM node:18-alpine AS builder
 
-# Set working directory dalam container
 WORKDIR /app
 
-# Salin file package dan install dependencies
+RUN npm install -g expo-cli
+
 COPY package*.json ./
+
 RUN npm install
 
-# Salin seluruh source code ke working directory
+RUN npx expo install react-native-web@~0.19.6 react-dom@18.2.0 @expo/webpack-config@^19.0.0
+
 COPY . .
 
-# Expose port yang digunakan (misalnya 8081 untuk Metro bundler)
-EXPOSE 8081
+RUN npx expo export:web
 
-# Perintah default untuk jalankan Metro bundler
-CMD ["npx", "react-native", "start"]
+FROM nginx:alpine
+
+COPY --from=builder /app/web-build /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
